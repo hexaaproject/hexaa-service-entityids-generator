@@ -7,17 +7,17 @@ import sys
 from re import sub
 from os import environ
 
-
 class MetadataHarvester:
     def __init__(self, url):
         filehandle = urlopen(url)
         self.xml = filehandle.read()
         filehandle.close()
 
+
 class Parser():
     def __init__(self, xml):
         document_object = parseString(xml)
-        self.parameters = {}
+        self.parameters = []
         for entity_descriptor in document_object.getElementsByTagName("md:EntityDescriptor"):
             entity_id = entity_descriptor.attributes["entityID"].value
             contacts = []
@@ -25,7 +25,7 @@ class Parser():
                 contact_type = contact_person_node.attributes["contactType"].value.encode('utf-8')
                 contact = {}
                 contact["type"] = contact_type
-                for type in [{"md:EmailAddress": "email"}, {"md:GivenName": "givenName"}, {"md:SurName": "surName"}]:
+                for type in [{"md:EmailAddress": "email"}, {"md:GivenName": "surName"}, {"md:SurName": "surName"}]:
                     node = contact_person_node.getElementsByTagName(type.keys()[0])
                     if node.length:
                         key = type.values()[0].encode('utf-8')
@@ -34,7 +34,7 @@ class Parser():
                             value = sub('^mailto:', '', value)
                         contact[key] = value
                 contacts.append(contact)
-            self.parameters[entity_id.encode('utf-8')] = contacts
+            self.parameters.append({entity_id.encode('utf-8'): contacts})
 
 
 class Exporter():
@@ -42,6 +42,7 @@ class Exporter():
         export = {"parameters": {"hexaa_service_entityids": parameters}}
         with open(target_file_path, 'w') as yaml_file:
             safe_dump(export, yaml_file, default_flow_style=False, allow_unicode=True)
+
 
 class ConfigurationChecker():
     def __init__(self):
@@ -56,6 +57,7 @@ class ConfigurationChecker():
             print 'There is no metadata sources url in METADATA_SOURCE_URLS environment variable'
             sys.exit(2)
 
+
 if __name__ == "__main__":
     target_file_path = environ["TARGET_FILE_PATH"]
     metadata_sources = environ["METADATA_SOURCE_URLS"].split(",")
@@ -67,6 +69,6 @@ if __name__ == "__main__":
     for metadata_source in metadata_sources:
         mh = MetadataHarvester(metadata_source.strip())
         parser = Parser(mh.xml)
-        parameters.append(parser.parameters)
+        parameters.extend(parser.parameters)
 
     Exporter(parameters, target_file_path)
