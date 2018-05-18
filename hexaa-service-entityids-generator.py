@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 from urllib import urlopen
 from xml.dom.minidom import parseString
-from yaml import dump
+from yaml import safe_dump
 import sys
 from re import sub
+from os import environ
 
 
 class MetadataHarvester:
@@ -12,7 +13,6 @@ class MetadataHarvester:
         filehandle = urlopen(url)
         self.xml = filehandle.read()
         filehandle.close()
-
 
 class Parser():
     def __init__(self, xml):
@@ -38,24 +38,35 @@ class Parser():
 
 
 class Exporter():
-    def __init__(self, parameters):
+    def __init__(self, parameters, target_file_path):
         export = {"parameters": {"hexaa_service_entityids": parameters}}
-        print dump(export, default_flow_style=False)
+        with open(target_file_path, 'w') as yaml_file:
+            safe_dump(export, yaml_file, default_flow_style=False, allow_unicode=True)
 
+class ConfigurationChecker():
+    def __init__(self):
+        try:
+            environ["TARGET_FILE_PATH"]
+        except KeyError:
+            print 'There is no target file path in TARGET_FILE_PATH environment variable'
+            sys.exit(2)
+        try:
+            environ["METADATA_SOURCE_URLS"]
+        except KeyError:
+            print 'There is no metadata sources url in METADATA_SOURCE_URLS environment variable'
+            sys.exit(2)
 
 if __name__ == "__main__":
-    arguments = sys.argv
-    if len(arguments) < 2:
-        print 'hexaa-service-entityids-generator.py <space separated metadatasource_urls>'
+    target_file_path = environ["TARGET_FILE_PATH"]
+    metadata_sources = environ["METADATA_SOURCE_URLS"].split(",")
+    if len(metadata_sources) < 1:
+        print 'There is no metadata sources url in METADATA_SOURCE_URLS environment variable'
         sys.exit(2)
-    del arguments[0]
-    metadata_sources = arguments
 
     parameters = []
-
     for metadata_source in metadata_sources:
-        mh = MetadataHarvester(metadata_source)
+        mh = MetadataHarvester(metadata_source.strip())
         parser = Parser(mh.xml)
         parameters.append(parser.parameters)
 
-    Exporter(parameters)
+    Exporter(parameters, target_file_path)

@@ -2,8 +2,18 @@
 
 You can list several space separated metadata source urls. 
 
+
+Configuration
+-------------
+
+Configure the script via environment variables:
+
+**METADATA_SOURCE_URLS**: comma separated list of xml format metadata soucre urls.
+
+**TARGET_FILE_PATH**: the path of the hexaa_entityids.yml in the container. Be sure to mount the required volume into the container.
+
 Usage
 -----
 example:
 
-docker run -t --rm --name hexaa-service-entityids-generator szabogyula/hexaa-service-entityids-generator https://metadata.eduid.hu/current/href.xml > hexaa_entityids.yml
+`docker run -t --rm --name hexaa-service-entityids-generator -e METADATA_SOURCE_URLS=https://metadata.eduid.hu/current/href.xml -e TARGET_FILE_PATH=/tmp/hexaa_entityids.yml -v /tmp/aa:/tmp szabogyula/hexaa-service-entityids-generator`
