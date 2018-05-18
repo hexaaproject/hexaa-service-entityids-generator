@@ -49,9 +49,17 @@ class Parser:
                     if node.length:
                         key = attribute_type.values()[0].encode('utf-8')
                         value = node[0].firstChild.nodeValue.encode('utf-8')
+
+                        # filter out ape from first place (avoid symfony service includeing)
+                        value = sub("^@", '', value)
+
                         if key == "email":
                             value = sub('^mailto:', '', value)
                         contact[key] = value
+                try:
+                    contact["surName"]
+                except KeyError:
+                    contact["surName"] = "N/A"
                 contacts.append(contact)
             self.parameters.update({entity_id.encode('utf-8'): contacts})
 
@@ -60,21 +68,21 @@ class Exporter:
     def __init__(self, parameters, target_file_path):
         export = {"parameters": {"hexaa_service_entityids": parameters}}
         with open(target_file_path, 'w') as yaml_file:
-            safe_dump(export, yaml_file, default_flow_style=False, allow_unicode=True)
+            safe_dump(export, yaml_file, default_flow_style=False, allow_unicode=True, indent=4)
         # print safe_dump(export, default_flow_style=False, allow_unicode=True)
 
 
 if __name__ == "__main__":
-    target_file_path = environ["TARGET_FILE_PATH"]
+    exporter_target_file_path = environ["TARGET_FILE_PATH"]
     metadata_sources = environ["METADATA_SOURCE_URLS"].split(",")
     if len(metadata_sources) < 1:
         print 'There is no metadata sources url in METADATA_SOURCE_URLS environment variable'
         sys.exit(2)
 
-    parameters = dict()
+    exporter_parameters = dict()
     for metadata_source in metadata_sources:
         mh = MetadataHarvester(metadata_source.strip())
         parser = Parser(mh.xml)
-        parameters.update(parser.parameters)
+        exporter_parameters.update(parser.parameters)
 
-    Exporter(parameters, target_file_path)
+    Exporter(exporter_parameters, exporter_target_file_path)
