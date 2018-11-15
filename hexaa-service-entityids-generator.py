@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 from urllib.request import urlopen
 from xml.dom.minidom import parseString
-from yaml import safe_dump
 import sys
 from re import sub
 from os import environ
+from time import sleep
+
+from yaml import safe_dump
 
 
 class ConfigurationChecker:
@@ -44,7 +46,7 @@ class Parser:
                         "md:EmailAddress": "email",
                         "md:GivenName": "surName",
                         "md:SurName": "surName"
-                        }.items():
+                }.items():
                     node = contact_person_node.getElementsByTagName(xml_type)
                     if node.length:
                         key = yaml_type
@@ -75,14 +77,29 @@ class Exporter:
 if __name__ == "__main__":
     exporter_target_file_path = environ["TARGET_FILE_PATH"]
     metadata_sources = environ["METADATA_SOURCE_URLS"].split(",")
+
+    repeat = False
+    try:
+        interval = int(environ['UPDATE_INTERVAL_MINUTES'])
+        repeat = True
+    except ValueError:
+        print('The UPDATE_INTERVAL_MINUTES value is not an integer.')
+        sys.exit(2)
+    except KeyError:
+        pass
+
     if len(metadata_sources) < 1:
         print('There is no metadata sources url in METADATA_SOURCE_URLS environment variable')
         sys.exit(2)
 
-    exporter_parameters = dict()
-    for metadata_source in metadata_sources:
-        mh = MetadataHarvester(metadata_source.strip())
-        parser = Parser(mh.xml)
-        exporter_parameters.update(parser.parameters)
+    while repeat:
+        exporter_parameters = dict()
+        for metadata_source in metadata_sources:
+            mh = MetadataHarvester(metadata_source.strip())
+            parser = Parser(mh.xml)
+            exporter_parameters.update(parser.parameters)
 
-    Exporter(exporter_parameters, exporter_target_file_path)
+        Exporter(exporter_parameters, exporter_target_file_path)
+
+        if repeat:
+            sleep(interval * 60)
