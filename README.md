@@ -1,7 +1,14 @@
-Docker image to generate the SP list for hexaa backend with metadata source url in the parameters.
+Docker image to generate the SP list for HEXAA backend with metadata source url in the parameters.
 
-You can list several space separated metadata source urls.
+You can set several metadata source URLs as a comma separated list.
 
+
+Building
+--------
+
+```
+docker build -t hexaaproject/hexaa-service-entityids-generator .
+```
 
 Configuration
 -------------
