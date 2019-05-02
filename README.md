@@ -1,7 +1,9 @@
-Docker image to generate the SP list for HEXAA backend with metadata source url in the parameters.
+Docker image to generate the SP list (YAML) for HEXAA backend from
+metadata source (XML) URL in the parameters.
 
 You can set several metadata source URLs as a comma separated list.
 
+You can find the built image on [Docker Hub](https://hub.docker.com/r/hexaaproject/hexaa-service-entityids-generator).
 
 Building
 --------
@@ -23,6 +25,16 @@ Configure the script via environment variables:
 
 Usage
 -----
-example:
 
-`docker run -t --rm --name hexaa-service-entityids-generator -e METADATA_SOURCE_URLS=https://metadata.eduid.hu/current/href.xml -e TARGET_FILE_PATH=/tmp/hexaa_entityids.yml -v /tmp/aa:/tmp szabogyula/hexaa-service-entityids-generator`
+Example:
+
+```
+mkdir -p -m o+w /tmp/sp
+docker run -t --rm --name hexaa-service-entityids-generator \
+    -e METADATA_SOURCE_URLS=https://metadata.eduid.hu/current/href.xml \
+    -e TARGET_FILE_PATH=/tmp/hexaa_entityids.yml \
+    -v /tmp/sp:/tmp \
+    hexaaproject/hexaa-service-entityids-generator
+```
+
+This will put the generated list in `/tmp/sp/hexaa_entityids.yml`.
