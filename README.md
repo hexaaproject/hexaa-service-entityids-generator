@@ -30,7 +30,7 @@ Example:
 
 ```
 mkdir -p -m o+w /tmp/sp
-docker run -t --rm --name hexaa-service-entityids-generator \
+docker run --rm  \
     -e METADATA_SOURCE_URLS=https://metadata.eduid.hu/current/href.xml \
     -e TARGET_FILE_PATH=/tmp/hexaa_entityids.yml \
     -v /tmp/sp:/tmp \

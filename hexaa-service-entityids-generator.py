@@ -92,7 +92,7 @@ if __name__ == "__main__":
         print('There is no metadata sources url in METADATA_SOURCE_URLS environment variable')
         sys.exit(2)
 
-    while repeat:
+    while True:
         exporter_parameters = dict()
         for metadata_source in metadata_sources:
             mh = MetadataHarvester(metadata_source.strip())
@@ -101,5 +101,7 @@ if __name__ == "__main__":
 
         Exporter(exporter_parameters, exporter_target_file_path)
 
-        if repeat:
-            sleep(interval * 60)
+        if not repeat:
+            break
+
+        sleep(interval * 60)
