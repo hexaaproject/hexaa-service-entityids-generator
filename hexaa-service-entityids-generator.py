@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from urllib.request import urlopen
+from urllib import request
 from xml.dom.minidom import parseString
 import sys
 from re import sub
 from os import environ
+import logging
+
 from time import sleep
 
 from yaml import safe_dump
@@ -26,7 +28,8 @@ class ConfigurationChecker:
 
 class MetadataHarvester:
     def __init__(self, url):
-        filehandle = urlopen(url)
+        filehandle = request.urlopen(url)
+        logging.debug('Return code from %s: %s', url, filehandle.getcode())
         self.xml = filehandle.read()
         filehandle.close()
 
@@ -50,9 +53,15 @@ class Parser:
                     node = contact_person_node.getElementsByTagName(xml_type)
                     if node.length:
                         key = yaml_type
-                        value = node[0].firstChild.nodeValue
+                        try:
+                            value = node[0].firstChild.nodeValue
+                        except AttributeError:
+                            logging.info('%s attribute is missing for'
+                                         ' the %s contact of %s. Skipping it.',
+                                         xml_type, contact_type, entity_id)
+                            continue
 
-                        # filter out ape from first place (avoid symfony service includeing)
+                        # filter out ape from first place (avoid symfony service including)
                         value = sub("^@", '', value)
 
                         if key == "email":
@@ -75,6 +84,11 @@ class Exporter:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+            )
+
     exporter_target_file_path = environ["TARGET_FILE_PATH"]
     metadata_sources = environ["METADATA_SOURCE_URLS"].split(",")
 
@@ -95,11 +109,19 @@ if __name__ == "__main__":
     while True:
         exporter_parameters = dict()
         for metadata_source in metadata_sources:
-            mh = MetadataHarvester(metadata_source.strip())
-            parser = Parser(mh.xml)
-            exporter_parameters.update(parser.parameters)
+            try:
+                mh = MetadataHarvester(metadata_source.strip())
+                parser = Parser(mh.xml)
+                exporter_parameters.update(parser.parameters)
+                logging.info(f'Successfuly fetched metadata from {metadata_source}')
+            except (request.URLError, AttributeError) as err:
+                logging.exception('Could not fetch metadata from %s', metadata_source)
 
-        Exporter(exporter_parameters, exporter_target_file_path)
+
+        try:
+            Exporter(exporter_parameters, exporter_target_file_path)
+        except PermissionError:
+            logging.exception('Could not write SP metadata to %s', exporter_target_file_path)
 
         if not repeat:
             break
