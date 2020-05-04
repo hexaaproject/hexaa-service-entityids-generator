@@ -79,7 +79,8 @@ class Exporter:
     def __init__(self, parameters, target_file_path):
         export = {"parameters": {"hexaa_service_entityids": parameters}}
         with open(target_file_path, 'w') as yaml_file:
-            safe_dump(export, yaml_file, default_flow_style=False, allow_unicode=True, indent=4)
+            safe_dump(export, yaml_file, default_flow_style=False,
+                      allow_unicode=True, indent=4, width=float('inf'))
         # print(safe_dump(export, default_flow_style=False, allow_unicode=True))
 
 
