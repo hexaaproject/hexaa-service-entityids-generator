@@ -64,8 +64,11 @@ class Parser:
                         # filter out ape from first place (avoid symfony service including)
                         value = sub("^@", '', value)
 
+                        value = value.strip()
+
                         if key == "email":
                             value = sub('^mailto:', '', value)
+
                         contact[key] = value
                 try:
                     contact["surName"]
