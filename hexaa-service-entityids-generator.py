@@ -9,7 +9,9 @@ import logging
 
 from time import sleep
 
-from yaml import safe_dump
+import ruamel.yaml as ryaml
+
+ryaml.emitter.Emitter.MAX_SIMPLE_KEY_LENGTH = float('inf')
 
 
 class ConfigurationChecker:
@@ -82,8 +84,8 @@ class Exporter:
     def __init__(self, parameters, target_file_path):
         export = {"parameters": {"hexaa_service_entityids": parameters}}
         with open(target_file_path, 'w') as yaml_file:
-            safe_dump(export, yaml_file, default_flow_style=False,
-                      allow_unicode=True, indent=4, width=float('inf'))
+            ryaml.safe_dump(export, yaml_file, default_flow_style=False,
+                            allow_unicode=True, indent=4, width=float('inf'))
         # print(safe_dump(export, default_flow_style=False, allow_unicode=True))
 
 
